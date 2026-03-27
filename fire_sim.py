@@ -6,9 +6,9 @@ import plotly.graph_objects as go
 
 st.set_page_config(page_title="Simulatore FIRE", layout="wide")
 st.title("🔥 Simulatore FIRE")
-st.write("Calcola il tuo percorso verso l'indipendenza finanziaria e simula i prelievi durante la pensione anticipata.")
+st.write("Calcola il tuo percorso verso l'indipendenza finanziaria con simulazioni avanzate, bonus e scatti di carriera.")
 
-# --- 1. IL "MOTORE" DEL SIMULATORE (Aggiornato con Decumulo) ---
+# --- 1. IL "MOTORE" DEL SIMULATORE (Aggiornato con Carriera) ---
 def simula_monte_carlo(p_iniziale, r_mensile_base, spese, rend_nom, infl, tasse, swr, vol, n_sim, anni_totali, bonus_euro, bonus_anno, incremento_r, anno_incremento):
     """
     Esegue una simulazione statistica del patrimonio basata su rendimenti casuali.
@@ -25,49 +25,34 @@ def simula_monte_carlo(p_iniziale, r_mensile_base, spese, rend_nom, infl, tasse,
     target = spese / swr
     rend_reale = rend_nom - (rend_nom * tasse) - infl
     mesi_totali = anni_totali * 12
-    spesa_mensile = spese / 12  # Quanto preleverai ogni mese in FIRE
-    
+
     tutte_le_traiettorie = {}
-    
+
     for i in range(n_sim):
         patrimonio = p_iniziale
         percorso = []
-        in_fire = False # L'interruttore: partiamo che NON siamo in FIRE
-        
         for mese in range(mesi_totali):
             rend_random_annuo = np.random.normal(rend_reale, vol)
             rend_random_mensile = (1 + rend_random_annuo) ** (1/12) - 1
-            
-            # Controllo: abbiamo raggiunto l'indipendenza?
-            if patrimonio >= target and not in_fire:
-                in_fire = True # Scatta l'interruttore! Smettiamo di lavorare.
-            
-            if not in_fire:
-                # --- FASE DI ACCUMULO ---
-                risparmio_attuale = r_mensile_base
-                if mese >= (anno_incremento * 12):
-                    risparmio_attuale += incremento_r
-                patrimonio += risparmio_attuale
-            else:
-                # --- FASE DI DECUMULO (Pensione Anticipata) ---
-                # Non aggiungiamo più il risparmio, ma preleviamo per vivere!
-                patrimonio -= spesa_mensile
-                
-            # Controllo Evento Extra (Bonus/Eredità)
+
+            # 1. GESTIONE DEL RISPARMIO MENSILE (Logica della Carriera)
+            risparmio_attuale = r_mensile_base
+            # Se il mese attuale ha superato la data della promozione...
+            if mese >= (anno_incremento * 12):
+                risparmio_attuale += incremento_r # ...aggiungi l'aumento!
+
+            patrimonio += risparmio_attuale
+
+            # 2. CONTROLLO EVENTO EXTRA (Bonus/Eredità)
             if mese == (bonus_anno * 12) - 1:
                 patrimonio += bonus_euro
-                
-            # Il mercato agisce su ciò che rimane investito
+
+            # 3. APPLICAZIONE DEL RENDIMENTO SUL MERCATO
             patrimonio *= (1 + rend_random_mensile)
-            
-            # Se i soldi finiscono, restano a zero (non andiamo in debito)
-            if patrimonio < 0:
-                patrimonio = 0
-                
             percorso.append(patrimonio)
-        
+
         tutte_le_traiettorie[f"Sim {i+1}"] = percorso
-        
+
     return pd.DataFrame(tutte_le_traiettorie), target
 
 
@@ -83,29 +68,30 @@ anno_fine = anno_corrente + anni_restanti
 st.sidebar.header("👤 Parametri Personali")
 p_iniziale = st.sidebar.number_input("Patrimonio attuale (€)", value=10000, step=1000)
 r_mensile = st.sidebar.number_input("Risparmio mensile attuale (€)", value=500, step=50)
-spese_annuali = st.sidebar.number_input("Spese annuali in FIRE (€)", value=24000, step=1000)
+spese_annuali = st.sidebar.number_input("Spese annuali desiderate (€)", value=24000, step=1000)
 
+# NUOVA SEZIONE: Crescita Professionale
 st.sidebar.header("🚀 Crescita Professionale")
-incremento_risparmio = st.sidebar.number_input("Aumento futuro risparmio (€/mese)", value=0, step=50)
-anno_incremento = st.sidebar.number_input("Tra quanti anni?", value=3, min_value=1, max_value=anni_restanti)
+incremento_risparmio = st.sidebar.number_input("Aumento futuro del risparmio mensile (€)", value=0, step=50, help="Quanto risparmierai IN PIÙ al mese dopo la promozione?")
+anno_incremento = st.sidebar.number_input("Tra quanti anni inizierai a risparmiare di più?", value=3, min_value=1, max_value=anni_restanti)
 
 st.sidebar.header("🎁 Eventi Straordinari")
-importo_bonus = st.sidebar.number_input("Importo una tantum (€)", value=0, step=5000)
-anno_del_bonus = st.sidebar.number_input("Tra quanti anni (bonus)?", value=10, min_value=1, max_value=anni_restanti)
+importo_bonus = st.sidebar.number_input("Importo una tantum (Eredità/TFR) (€)", value=0, step=5000)
+anno_del_bonus = st.sidebar.number_input("Tra quanti anni lo riceverai?", value=10, min_value=1, max_value=anni_restanti)
 
 st.sidebar.header("📈 Mercato & Tasse")
-rend_nom = st.sidebar.slider("Rendimento Lordo (%)", 1.0, 12.0, 8.0) / 100
+rend_nom = st.sidebar.slider("Rendimento Lordo (%)", 1.0, 12.0, 10.0) / 100
 volatilita = st.sidebar.slider("Rischio/Volatilità (%)", 5.0, 25.0, 15.0) / 100
 inflazione = st.sidebar.slider("Inflazione (%)", 0.0, 5.0, 2.0) / 100
 n_simulazioni = st.sidebar.select_slider("Numero Simulazioni", options=[10, 50, 100], value=50)
 
-tasse_cg = 0.1925 
-swr = 0.04      
+tasse_cg = 0.1925
+swr = 0.04
 
 # --- 3. ESECUZIONE DEI CALCOLI ---
 df_sim, capitale_target = simula_monte_carlo(
-    p_iniziale, r_mensile, spese_annuali, rend_nom, inflazione, tasse_cg, swr, 
-    volatilita, n_simulazioni, anni_restanti, importo_bonus, anno_del_bonus, 
+    p_iniziale, r_mensile, spese_annuali, rend_nom, inflazione, tasse_cg, swr,
+    volatilita, n_simulazioni, anni_restanti, importo_bonus, anno_del_bonus,
     incremento_risparmio, anno_incremento
 )
 
@@ -146,7 +132,7 @@ for anno_target in anni_da_controllare:
 
 st.table(pd.DataFrame(riassunto).set_index("Scadenza"))
 
-# --- 4. CALCOLO DELLA DATA DI LIBERTÀ ---
+# --- 4. CALCOLO DELLA DATA DI LIBERTÀ (FIRE DATE) ---
 st.subheader("🗓️ Il tuo responso FIRE")
 mediana_patrimonio = df_sim.median(axis=1)
 
@@ -161,18 +147,18 @@ if mese_fire:
     mesi_extra = mese_fire % 12
     eta_al_fire = eta_attuale + anni_al_fire
     anno_calendario_fire = anno_corrente + anni_al_fire
-    
+
     c1, c2, c3 = st.columns(3)
     c1.metric("Anno del FIRE", f"{anno_calendario_fire}")
     c2.metric("La tua età al FIRE", f"{eta_al_fire} anni")
     c3.metric("Tempo d'attesa", f"{anni_al_fire} anni e {mesi_extra} mesi")
-    
+
     st.success(f"🎉 Raggiungerai l'indipendenza finanziaria nel **{anno_calendario_fire}**, all'età di **{eta_al_fire} anni**.")
 else:
     st.warning("⚠️ Con i parametri attuali, non raggiungerai il target FIRE entro l'aspettativa di vita.")
 
 # --- 5. GRAFICO INTERATTIVO PRO (Plotly) ---
-st.subheader(f"📈 Proiezione: Accumulo e Decumulo (Target: € {capitale_target:,.0f})")
+st.subheader(f"📈 Proiezione della crescita (Target: € {capitale_target:,.0f})")
 
 anni_asse_x = [(mese / 12) + anno_corrente for mese in df_sim.index]
 fig = go.Figure()
@@ -190,17 +176,10 @@ fig.add_trace(go.Scatter(
 
 fig.add_trace(go.Scatter(
     x=anni_asse_x, y=[capitale_target] * len(anni_asse_x), mode='lines',
-    line=dict(color='red', width=2, dash='dash'), name='Soglia FIRE'
+    line=dict(color='red', width=2, dash='dash'), name='OBIETTIVO FIRE'
 ))
 
-fig.update_layout(
-    xaxis_title="Anno", 
-    yaxis_title="Patrimonio (€)", 
-    hovermode="x unified", 
-    template="plotly_white", 
-    margin=dict(l=0, r=0, t=30, b=0),
-    yaxis=dict(rangemode='tozero') # Forza l'asse Y a partire da zero per vedere i fallimenti
-)
+fig.update_layout(xaxis_title="Anno", yaxis_title="Patrimonio (€)", hovermode="x unified", template="plotly_white", margin=dict(l=0, r=0, t=30, b=0))
 st.plotly_chart(fig, use_container_width=True)
 
 # --- 6. ESPORTAZIONE ---
