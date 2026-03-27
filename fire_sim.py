@@ -94,12 +94,12 @@ importo_bonus = st.sidebar.number_input("Importo una tantum (€)", value=0, ste
 anno_del_bonus = st.sidebar.number_input("Tra quanti anni (bonus)?", value=10, min_value=1, max_value=anni_restanti)
 
 st.sidebar.header("📈 Mercato & Tasse")
-rend_nom = st.sidebar.slider("Rendimento Lordo (%)", 1.0, 12.0, 7.0) / 100
+rend_nom = st.sidebar.slider("Rendimento Lordo (%)", 1.0, 12.0, 8.0) / 100
 volatilita = st.sidebar.slider("Rischio/Volatilità (%)", 5.0, 25.0, 15.0) / 100
 inflazione = st.sidebar.slider("Inflazione (%)", 0.0, 5.0, 2.0) / 100
 n_simulazioni = st.sidebar.select_slider("Numero Simulazioni", options=[10, 50, 100], value=50)
 
-tasse_cg = 0.26 
+tasse_cg = 0.1925 
 swr = 0.04      
 
 # --- 3. ESECUZIONE DEI CALCOLI ---
