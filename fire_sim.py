@@ -83,6 +83,43 @@ df_sim, capitale_target = simula_monte_carlo(
     incremento_risparmio, anno_incremento
 )
 
+# --- 4. TABELLA DI SINTESI DINAMICA ---
+st.subheader("📋 Traguardi nel tempo")
+
+# NOVITÀ: La tabella ora si adatta in base a quanti anni ti mancano!
+# Controlliamo a 10 anni, a metà del percorso, e alla fine (aspettativa di vita)
+meta_percorso = int(anni_restanti / 2)
+anni_da_controllare = [10, meta_percorso, anni_restanti]
+
+# Rimuoviamo eventuali duplicati (es. se ti mancano 10 anni in totale) e mettiamo in ordine
+anni_da_controllare = sorted(list(set([a for a in anni_da_controllare if a <= anni_restanti and a > 0])))
+
+riassunto = []
+
+for anno_target in anni_da_controllare:
+    mese_indice = (anno_target * 12) - 1
+    valori_mese = df_sim.iloc[mese_indice]
+
+    caso_peggiore = np.percentile(valori_mese, 10)
+    caso_medio = np.median(valori_mese)
+    caso_migliore = np.percentile(valori_mese, 90)
+
+    # Calcoliamo anche l'anno di calendario corrispondente
+    anno_calendario = anno_corrente + anno_target
+
+    etichetta = f"Tra {anno_target} Anni ({anno_calendario})"
+    if anno_target == anni_restanti:
+         etichetta = f"Fine Vita a {aspettativa_vita} anni ({anno_calendario})"
+
+    riassunto.append({
+        "Scadenza": etichetta,
+        "Caso Peggiore (Pessimista)": f"€ {caso_peggiore:,.0f}",
+        "Caso Medio (Realista)": f"€ {caso_medio:,.0f}",
+        "Caso Migliore (Ottimista)": f"€ {caso_migliore:,.0f}"
+    })
+
+st.table(pd.DataFrame(riassunto).set_index("Scadenza"))
+
 # --- 4. CALCOLO DELLA DATA DI LIBERTÀ (FIRE DATE) ---
 st.subheader("🗓️ Il tuo responso FIRE")
 mediana_patrimonio = df_sim.median(axis=1)
