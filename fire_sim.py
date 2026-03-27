@@ -12,12 +12,12 @@ st.write("Calcola il tuo percorso verso l'indipendenza finanziaria con simulazio
 def simula_monte_carlo(p_iniziale, r_mensile_base, spese, rend_nom, infl, tasse, swr, vol, n_sim, anni_totali, bonus_euro, bonus_anno, incremento_r, anno_incremento):
     """
     Esegue una simulazione statistica del patrimonio basata su rendimenti casuali.
-    
+
     Args:
         p_iniziale (float): Capitale di partenza.
         r_mensile_base (float): Risparmio mensile attuale.
         ... [e così via per gli altri parametri]
-    
+
     Returns:
         pd.DataFrame: Tabella con tutte le simulazioni.
         float: Capitale target calcolato.
@@ -25,34 +25,34 @@ def simula_monte_carlo(p_iniziale, r_mensile_base, spese, rend_nom, infl, tasse,
     target = spese / swr
     rend_reale = rend_nom - (rend_nom * tasse) - infl
     mesi_totali = anni_totali * 12
-    
+
     tutte_le_traiettorie = {}
-    
+
     for i in range(n_sim):
         patrimonio = p_iniziale
         percorso = []
         for mese in range(mesi_totali):
             rend_random_annuo = np.random.normal(rend_reale, vol)
             rend_random_mensile = (1 + rend_random_annuo) ** (1/12) - 1
-            
+
             # 1. GESTIONE DEL RISPARMIO MENSILE (Logica della Carriera)
             risparmio_attuale = r_mensile_base
             # Se il mese attuale ha superato la data della promozione...
             if mese >= (anno_incremento * 12):
                 risparmio_attuale += incremento_r # ...aggiungi l'aumento!
-                
+
             patrimonio += risparmio_attuale
-            
+
             # 2. CONTROLLO EVENTO EXTRA (Bonus/Eredità)
             if mese == (bonus_anno * 12) - 1:
                 patrimonio += bonus_euro
-                
+
             # 3. APPLICAZIONE DEL RENDIMENTO SUL MERCATO
             patrimonio *= (1 + rend_random_mensile)
             percorso.append(patrimonio)
-        
+
         tutte_le_traiettorie[f"Sim {i+1}"] = percorso
-        
+
     return pd.DataFrame(tutte_le_traiettorie), target
 
 
@@ -85,13 +85,13 @@ volatilita = st.sidebar.slider("Rischio/Volatilità (%)", 5.0, 25.0, 15.0) / 100
 inflazione = st.sidebar.slider("Inflazione (%)", 0.0, 5.0, 2.0) / 100
 n_simulazioni = st.sidebar.select_slider("Numero Simulazioni", options=[10, 50, 100], value=50)
 
-tasse_cg = 0.26 
-swr = 0.04      
+tasse_cg = 0.1925
+swr = 0.04
 
 # --- 3. ESECUZIONE DEI CALCOLI ---
 df_sim, capitale_target = simula_monte_carlo(
-    p_iniziale, r_mensile, spese_annuali, rend_nom, inflazione, tasse_cg, swr, 
-    volatilita, n_simulazioni, anni_restanti, importo_bonus, anno_del_bonus, 
+    p_iniziale, r_mensile, spese_annuali, rend_nom, inflazione, tasse_cg, swr,
+    volatilita, n_simulazioni, anni_restanti, importo_bonus, anno_del_bonus,
     incremento_risparmio, anno_incremento
 )
 
@@ -147,12 +147,12 @@ if mese_fire:
     mesi_extra = mese_fire % 12
     eta_al_fire = eta_attuale + anni_al_fire
     anno_calendario_fire = anno_corrente + anni_al_fire
-    
+
     c1, c2, c3 = st.columns(3)
     c1.metric("Anno del FIRE", f"{anno_calendario_fire}")
     c2.metric("La tua età al FIRE", f"{eta_al_fire} anni")
     c3.metric("Tempo d'attesa", f"{anni_al_fire} anni e {mesi_extra} mesi")
-    
+
     st.success(f"🎉 Raggiungerai l'indipendenza finanziaria nel **{anno_calendario_fire}**, all'età di **{eta_al_fire} anni**.")
 else:
     st.warning("⚠️ Con i parametri attuali, non raggiungerai il target FIRE entro l'aspettativa di vita.")
@@ -193,24 +193,24 @@ st.header("❓ Domande Frequenti (FAQ)")
 
 with st.expander("Come viene calcolato il Target FIRE?"):
     st.write("""
-        Il simulatore utilizza la **Regola del 4%** (SWR - Safe Withdrawal Rate). 
-        Il capitale necessario è calcolato come:  
-        $$Target = \frac{Spese \ Annuali}{0.04}$$  
+        Il simulatore utilizza la **Regola del 4%** (SWR - Safe Withdrawal Rate).
+        Il capitale necessario è calcolato come:
+        $$Target = \frac{Spese \ Annuali}{0.04}$$
         Questa formula indica la somma necessaria per poter prelevare annualmente quanto ti serve senza intaccare il capitale nel lungo termine.
     """)
 
 with st.expander("Cos'è la simulazione Monte Carlo?"):
     st.write("""
-        A differenza di un calcolo lineare, la simulazione **Monte Carlo** tiene conto del rischio. 
-        Genera molteplici scenari casuali basati sulla **volatilità** (deviazione standard). 
+        A differenza di un calcolo lineare, la simulazione **Monte Carlo** tiene conto del rischio.
+        Genera molteplici scenari casuali basati sulla **volatilità** (deviazione standard).
         Il 'Percorso Medio' rappresenta la mediana dei risultati, mentre le zone d'ombra mostrano quanto i mercati possono oscillare.
     """)
 
 with st.expander("I valori sono al lordo o al netto di tasse e inflazione?"):
     st.write("""
-        I risultati sono presentati in **valore reale netto**.  
+        I risultati sono presentati in **valore reale netto**.
         Il simulatore applica automaticamente:
-        1. Una tassazione del **26%** sulle plusvalenze.
+        1. La tassazione media aritmetica semplice tra il 26% (aliquota ordinaria rendite finanziarie) e il 12,5% (aliquota titoli di Stato/white list) è **19,25%** sulle plusvalenze.
         2. Una riduzione basata sull'**inflazione** per mostrarti il potere d'acquisto effettivo futuro.
     """)
 
