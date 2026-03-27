@@ -143,7 +143,7 @@ for mese, valore in enumerate(mediana_patrimonio):
         break
 
 if mese_fire:
-    anni_al_fire = mese_fire / 12
+    anni_al_fire = mese_fire // 12
     mesi_extra = mese_fire % 12
     eta_al_fire = eta_attuale + anni_al_fire
     anno_calendario_fire = anno_corrente + anni_al_fire
