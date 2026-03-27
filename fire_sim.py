@@ -191,6 +191,19 @@ st.download_button("📥 Scarica dati in CSV", data=csv, file_name='simulazione_
 st.divider()
 st.header("❓ Domande Frequenti (FAQ)")
 
+with st.expander("Cosa si intende per FIRE?"):
+    st.write("""
+        FIRE è l'acronimo di Financial Independence, Retire Early (Indipendenza Finanziaria, Pensione Anticipata) e indica un movimento finanziario e uno stile di vita che mira a raggiungere la libertà economica per ritirarsi dal lavoro retribuito prima dell'età pensionabile tradizionale.
+
+        Il movimento, nato negli anni '90 e reso popolare nel 2011 dal blog di Mr. Money Mustache, si basa su tre principi cardine:
+
+        - Risparmio aggressivo: risparmiare tra il 50% e il 70% del reddito annuale per accumulare capitale rapidamente.
+        - Regola del 4%: accumulare un capitale pari a 25 volte le spese annuali, permettendo di prelevare il 4% annuo dagli investimenti per vivere senza esaurire il capitale.
+        - Investimenti: investire strategicamente, spesso in indici di mercato o ETF, per far fruttare i risparmi tramite l'interesse composto.
+
+        Esistono diverse varianti del movimento, tra cui il **LeanFIRE** (stile di vita minimalista con capitale ridotto), il **FatFIRE** (pensione lussuosa con capitale elevato), il **BaristaFIRE** (pensionamento parziale con lavoro part-time) e il **CoastFIRE** (investimenti iniziali che crescono autonomamente).
+    """)
+
 with st.expander("Come viene calcolato il Target FIRE?"):
     st.write("""
         Il simulatore utilizza la **Regola del 4%** (SWR - Safe Withdrawal Rate).
