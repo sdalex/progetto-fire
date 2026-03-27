@@ -5,7 +5,7 @@ import datetime
 import plotly.graph_objects as go
 
 st.set_page_config(page_title="Simulatore FIRE", layout="wide")
-st.title("🔥 Simulatore FIRE: Dashboard Completa")
+st.title("🔥 Simulatore FIRE")
 st.write("Calcola il tuo percorso verso l'indipendenza finanziaria, includendo bonus e imprevisti positivi.")
 
 # --- 1. IL "MOTORE" DEL SIMULATORE (Aggiornato con il Bonus) ---
