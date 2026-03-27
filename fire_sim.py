@@ -10,6 +10,18 @@ st.write("Calcola il tuo percorso verso l'indipendenza finanziaria con simulazio
 
 # --- 1. IL "MOTORE" DEL SIMULATORE (Aggiornato con Carriera) ---
 def simula_monte_carlo(p_iniziale, r_mensile_base, spese, rend_nom, infl, tasse, swr, vol, n_sim, anni_totali, bonus_euro, bonus_anno, incremento_r, anno_incremento):
+    """
+    Esegue una simulazione statistica del patrimonio basata su rendimenti casuali.
+    
+    Args:
+        p_iniziale (float): Capitale di partenza.
+        r_mensile_base (float): Risparmio mensile attuale.
+        ... [e così via per gli altri parametri]
+    
+    Returns:
+        pd.DataFrame: Tabella con tutte le simulazioni.
+        float: Capitale target calcolato.
+    """
     target = spese / swr
     rend_reale = rend_nom - (rend_nom * tasse) - infl
     mesi_totali = anni_totali * 12
@@ -174,3 +186,36 @@ st.plotly_chart(fig, use_container_width=True)
 st.divider()
 csv = df_sim.to_csv(index=True).encode('utf-8')
 st.download_button("📥 Scarica dati in CSV", data=csv, file_name='simulazione_fire.csv', mime='text/csv')
+
+# --- 7. SEZIONE FAQ ---
+st.divider()
+st.header("❓ Domande Frequenti (FAQ)")
+
+with st.expander("Come viene calcolato il Target FIRE?"):
+    st.write("""
+        Il simulatore utilizza la **Regola del 4%** (SWR - Safe Withdrawal Rate). 
+        Il capitale necessario è calcolato come:  
+        $$Target = \frac{Spese \ Annuali}{0.04}$$  
+        Questa formula indica la somma necessaria per poter prelevare annualmente quanto ti serve senza intaccare il capitale nel lungo termine.
+    """)
+
+with st.expander("Cos'è la simulazione Monte Carlo?"):
+    st.write("""
+        A differenza di un calcolo lineare, la simulazione **Monte Carlo** tiene conto del rischio. 
+        Genera molteplici scenari casuali basati sulla **volatilità** (deviazione standard). 
+        Il 'Percorso Medio' rappresenta la mediana dei risultati, mentre le zone d'ombra mostrano quanto i mercati possono oscillare.
+    """)
+
+with st.expander("I valori sono al lordo o al netto di tasse e inflazione?"):
+    st.write("""
+        I risultati sono presentati in **valore reale netto**.  
+        Il simulatore applica automaticamente:
+        1. Una tassazione del **26%** sulle plusvalenze.
+        2. Una riduzione basata sull'**inflazione** per mostrarti il potere d'acquisto effettivo futuro.
+    """)
+
+with st.expander("Come funzionano i Bonus e gli Aumenti?"):
+    st.write("""
+        - **Bonus/Eredità:** Viene aggiunto interamente al patrimonio nel mese X dell'anno impostato.
+        - **Crescita Professionale:** Aumenta il tuo risparmio mensile in modo permanente a partire dall'anno scelto. Entrambi beneficiano dell'interesse composto da quel momento in poi.
+    """)
